@@ -1,0 +1,23 @@
+# Java / Maven
+target/
+*.class
+*.log
+# Node / Vite
+node_modules/
+dist/
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Academic review documents stay local
+/College-review/
+
+# Local credentials and overrides
+.env
+.env.*
+!.env.example
+application-local.properties
+*.pem
+*.key
