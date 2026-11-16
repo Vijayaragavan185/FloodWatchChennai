@@ -32,6 +32,10 @@ React 18 + Vite (:5173)  ── /api/... via Vite proxy ──┐
 
 ## Run it (Windows)
 
+For the public website and Docker setup, see [deployment instructions](docs/deployment.md).
+The web container serves the React build and forwards API requests to both private Java services.
+The live URL is assigned only after deploying with an authorized hosting account.
+
 Requirements: **JDK 17+** (the JDK IntelliJ installs in `%USERPROFILE%\.jdks` is found automatically), **Node.js 18+**,
 **MySQL 8+** running on port 3306. Maven is **not** needed – each service has the Maven wrapper (`mvnw.cmd`).
 
