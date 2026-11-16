@@ -28,7 +28,7 @@ HAVING COUNT(r.id) >= (SELECT AVG(t.cnt) FROM (SELECT COUNT(*) AS cnt FROM repor
 ORDER BY reports DESC, avg_sev DESC`
 
 export default function Insights() {
-  const { data, error, loading } = useApi('/api/insights')
+  const { data, error, loading, reload } = useApi('/api/insights')
   const [showSql, setShowSql] = useState({})
   const toggle = (k) => setShowSql((s) => ({ ...s, [k]: !s[k] }))
 
@@ -40,7 +40,14 @@ export default function Insights() {
           <p className="muted">Computed by alert-service with plain JDBC and SQL set operations. Last season: {data?.lastSeason ?? '…'} · this season: {data?.thisSeason ?? '…'}.</p>
         </div>
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <div className="error" role="alert">
+          <p>{error}</p>
+          <button className="btn" disabled={loading} onClick={() => reload()}>
+            {loading ? 'Retrying…' : 'Try again'}
+          </button>
+        </div>
+      )}
       {loading && <div className="skeleton list-skeleton" />}
       {data && (
         <>

@@ -5,9 +5,10 @@ RUN npm ci
 COPY index.html vite.config.js ./
 COPY public ./public
 COPY src ./src
+COPY server.mjs server.test.mjs api-client.test.mjs ./
 ARG VITE_PUBLIC_DEMO=true
 ENV VITE_PUBLIC_DEMO=${VITE_PUBLIC_DEMO}
-RUN npm run build
+RUN npm test && npm run build
 
 FROM node:22-alpine
 WORKDIR /app
