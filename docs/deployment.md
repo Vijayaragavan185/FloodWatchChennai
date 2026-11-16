@@ -60,6 +60,29 @@ The final public URL is assigned by the host after deployment and must be verifi
 The deployed services follow the GitHub `main` branch. Watch paths limit each application to
 its own source folder, so documentation-only changes do not rebuild every service.
 
+## MySQL memory settings
+
+The live demo's MySQL container has a 500 MB memory limit. Default MySQL 8.4 buffers
+and caches approached that limit and the database restarted, briefly causing `/api/insights`
+to return 503. The MySQL service now uses this custom Railway start command:
+
+```text
+docker-entrypoint.sh mysqld --innodb-buffer-pool-size=64M --innodb-buffer-pool-chunk-size=64M --innodb-log-buffer-size=16M --max-connections=40 --table-open-cache=256 --table-definition-cache=400 --thread-cache-size=4 --tmp-table-size=16M --max-heap-table-size=16M --temptable-max-ram=32M --performance-schema=OFF
+```
+
+Keep `docker-entrypoint.sh` in the Railway command because an image's custom start command
+overrides its entrypoint. Docker Compose supplies the same options using `command`, which
+keeps the image's default entrypoint. These settings bound the main caches and temporary-table
+memory and disable optional Performance Schema SQL instrumentation for this small demo.
+Railway's CPU, memory and disk metrics remain available. These settings are not a hard cap
+on total MySQL memory. Monitor usage as traffic grows and
+adjust resources or concurrency when necessary. The database volume and credentials remain
+the same when applying these settings.
+
+The frontend retries GET requests after 0.5, 1 and 2 seconds for network failures or
+502/503/504 responses. A lasting outage displays an error and Insights offers **Try again**.
+POST and PUT requests are never automatically replayed, preventing duplicate reports or votes.
+
 ## Public classroom demo
 
 The container build enables a notice that the shared data and identities are for demonstration.
@@ -80,7 +103,7 @@ then run `docker compose up --build -d` from the project root. Open `http://loca
 Only port 8080 is published; MySQL persists in the `mysql-data` volume. Stop with
 `docker compose down` (without `-v`, which would remove the database volume).
 
-Gateway checks: `node --test frontend/server.test.mjs`.
+Frontend and gateway checks: `npm test --prefix frontend`.
 
 ## Make the GitHub source public
 
