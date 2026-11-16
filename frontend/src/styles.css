@@ -27,6 +27,8 @@ h3 { font-size: 1rem; }
 p { margin: .3rem 0 .6rem; }
 .muted { color: var(--muted); }
 .small { font-size: .82rem; }
+.form { display: grid; gap: 1rem; margin: 1.25rem 0; }
+.form label { display: grid; gap: .4rem; font-weight: 600; }
 .error { color: var(--red); background: #fdeceb; border: 1px solid #f5c2bf; padding: .5rem .75rem; border-radius: 8px; }
 
 /* ---------- shell ---------- */

@@ -85,16 +85,23 @@ POST and PUT requests are never automatically replayed, preventing duplicate rep
 
 ## Public classroom demo
 
-The container build enables a notice that the shared data and identities are for demonstration.
-Use the supplied synthetic identities. Registration is disabled at both the UI and gateway
-in this public mode to avoid collecting visitors' real phone numbers. Reporting, voting,
-alert resolution and insights continue to use the real Java services and MySQL. Existing
-role selection remains demonstration behavior rather than authenticated access. The gateway
+The container build enables a notice that the shared observations are for demonstration.
+Sign in with a provisioned email/password account. Public registration is disabled.
+Set `AUTH_ACCOUNTS_JSON` in the web service to a JSON array of accounts with `email`, `salt`,
+`hash` (hex scrypt output, 32 bytes), `role`, `fullName` and a synthetic `phone` for citizens.
+Never commit credentials. Citizen database rows are created on first successful login;
+the officer account maps to an existing OFFICIAL database identity. Password hashes remain
+in the hosting environment. Eight-hour opaque sessions are stored in gateway memory and
+use Secure HttpOnly SameSite=Strict cookies; logout revokes a session and redeployment
+signs users out. GET `/api/auth/me` restores the current session; POST `/api/auth/login`
+and POST `/api/auth/logout` manage it. The gateway binds every write to the session user,
+blocks unauthenticated writes and requires OFFICIAL for both report and alert closure.
+The Java services remain private. Reporting, voting, alerts and insights use MySQL. The gateway
 caps writes to 120 per minute per instance, limits request bodies, hides backend errors and
 serves static assets with security headers. This is a classroom demo, not an emergency service.
 
-Local Vite development keeps registration available. If deploying a private authenticated
-environment instead, rebuild with `VITE_PUBLIC_DEMO=false` and set `PUBLIC_DEMO=false` in web.
+For a local gateway over HTTP, set `COOKIE_SECURE=false` and configure the same account
+hashes. Direct Vite-to-Java development does not provide the gateway authentication endpoints.
 
 ## Verify the same containers locally
 

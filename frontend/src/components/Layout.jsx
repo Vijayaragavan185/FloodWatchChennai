@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useUser } from '../context/UserContext.jsx'
-import RegisterDialog from './RegisterDialog.jsx'
 
 const LINKS = [
   { to: '/', label: 'Live map', end: true },
@@ -15,8 +13,7 @@ const LINKS = [
 const PUBLIC_DEMO = import.meta.env.VITE_PUBLIC_DEMO === 'true'
 
 export default function Layout() {
-  const { users, current, setCurrentId } = useUser()
-  const [registering, setRegistering] = useState(false)
+  const { current, logout } = useUser()
 
   return (
     <div className="shell">
@@ -38,26 +35,18 @@ export default function Layout() {
           ))}
         </nav>
         <div className="acting">
-          <label htmlFor="acting-as">Acting as</label>
-          <select id="acting-as" value={current?.id ?? ''} onChange={(e) => setCurrentId(Number(e.target.value))}>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.fullName}{u.role === 'OFFICIAL' ? ' (official)' : ''}
-              </option>
-            ))}
-          </select>
-          {!PUBLIC_DEMO && <button type="button" className="link-btn" onClick={() => setRegistering(true)}>+ New user</button>}
+          {current ? <><span>{current.fullName} · {current.role === 'OFFICIAL' ? 'Officer' : 'Citizen'}</span>
+            <button className="link-btn" onClick={() => logout().catch(() => {})}>Sign out</button></> : <NavLink to="/login" className="btn">Sign in</NavLink>}
         </div>
       </header>
       <main className="content">
-        {PUBLIC_DEMO && <p className="public-demo-notice" role="note">Public classroom demo · Use the sample identities. Reports are shared demo records; enter synthetic observations only.</p>}
+        {PUBLIC_DEMO && <p className="public-demo-notice" role="note">Classroom demo · Sign in to report or verify flooding. Officer login is required to close cases. Enter synthetic observations only.</p>}
         <Outlet />
       </main>
       <footer className="footer">
         FloodWatch Chennai · 21CSE354T Full Stack Web Development project · React + Spring Boot microservices + MySQL ·
         Demo data is synthetic.
       </footer>
-      {registering && <RegisterDialog onClose={() => setRegistering(false)} />}
     </div>
   )
 }

@@ -2,13 +2,15 @@ import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
 import { dirname, extname, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { createAuth } from './auth.mjs'
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.ico': 'image/x-icon', '.json': 'application/json', '.woff2': 'font/woff2' }
 
 export function createApp({ reportUrl, alertUrl, distDir = resolve(dirname(fileURLToPath(import.meta.url)), 'dist'),
-  publicDemo = true, writeLimit = 120, requestTimeout = 15000 } = {}) {
+  publicDemo = true, writeLimit = 120, requestTimeout = 15000, requireAuth = false,
+  authAccounts = [], secureCookies = true } = {}) {
   const targets = [reportUrl, alertUrl].map(value => {
     const url = new URL(value)
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.pathname !== '/') {
@@ -17,6 +19,7 @@ export function createApp({ reportUrl, alertUrl, distDir = resolve(dirname(fileU
     return url.origin
   })
   const root = resolve(distDir)
+  const auth = createAuth(authAccounts, targets[0], secureCookies)
   let writeWindow = { start: Date.now(), count: 0 }
   const json = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
@@ -44,6 +47,20 @@ export function createApp({ reportUrl, alertUrl, distDir = resolve(dirname(fileU
         // These API paths contain only fixed names and numeric IDs. Reject encoded aliases
         // so they cannot bypass public-demo restrictions before Spring decodes them.
         if (url.pathname.includes('%')) return json(res, 400, { message: 'Invalid API path' })
+        if (await auth.handle(req, res, url, json)) return
+        const identity = auth.session(req)?.user
+        if (requireAuth && url.pathname.replace(/\/+$/, '') === '/api/users' && req.method === 'GET') {
+          return json(res, identity ? 200 : 401, identity ? [identity] : { message: 'Please sign in' })
+        }
+        if (requireAuth && req.method !== 'GET') {
+          if (!identity) return json(res, 401, { message: 'Please sign in to continue' })
+          if (req.headers['sec-fetch-site'] === 'cross-site') return json(res, 403, { message: 'Invalid request origin' })
+          const allowed = (req.method === 'POST' && /^\/api\/reports(?:\/\d+\/votes)?$/.test(url.pathname)) ||
+            (req.method === 'PUT' && /^\/api\/(?:reports\/\d+\/resolve|alerts\/(?:\d+\/resolve|resolve-street\/\d+))$/.test(url.pathname))
+          if (!allowed) return json(res, 403, { message: 'Action is not available' })
+          if (req.method === 'PUT' && identity.role !== 'OFFICIAL') return json(res, 403, { message: 'Only an officer can close cases' })
+          if (req.method === 'PUT' && url.pathname.startsWith('/api/reports/')) url.searchParams.set('userId', identity.id)
+        }
         if (!['GET', 'POST', 'PUT'].includes(req.method)) return json(res, 405, { message: 'Method not allowed' })
         if (publicDemo && req.method === 'POST' && url.pathname.replace(/\/+$/, '') === '/api/users') {
           return json(res, 403, { message: 'Choose an existing demo user. Registration is disabled on the public demo.' })
@@ -68,9 +85,15 @@ export function createApp({ reportUrl, alertUrl, distDir = resolve(dirname(fileU
           chunks.push(chunk)
         }
         const isAlert = /^\/api\/(alerts|insights)(\/|$)/.test(url.pathname)
+        let body = Buffer.concat(chunks)
+        if (requireAuth && req.method === 'POST') {
+          let input
+          try { input = JSON.parse(body.toString()) } catch { return json(res, 400, { message: 'Invalid JSON' }) }
+          body = Buffer.from(JSON.stringify({ ...input, userId: identity.id }))
+        }
         const response = await fetch(targets[isAlert ? 1 : 0] + url.pathname + url.search, {
           method: req.method, headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-          body: req.method === 'GET' ? undefined : Buffer.concat(chunks),
+          body: req.method === 'GET' ? undefined : body,
           redirect: 'error', signal: AbortSignal.timeout(requestTimeout),
         })
         res.writeHead(response.status, { 'Content-Type': response.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store' })
@@ -102,7 +125,8 @@ export function createApp({ reportUrl, alertUrl, distDir = resolve(dirname(fileU
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const server = createApp({ reportUrl: process.env.REPORT_SERVICE_URL, alertUrl: process.env.ALERT_SERVICE_URL,
-    publicDemo: process.env.PUBLIC_DEMO !== 'false' })
+    publicDemo: process.env.PUBLIC_DEMO !== 'false', requireAuth: true,
+    authAccounts: JSON.parse(process.env.AUTH_ACCOUNTS_JSON || '[]'), secureCookies: process.env.COOKIE_SECURE !== 'false' })
   const port = Number(process.env.PORT || 8080)
   server.listen(port, '::', () => console.log(`FloodWatch public gateway listening on ${port}`))
   process.on('SIGTERM', () => server.close(() => process.exit(0)))

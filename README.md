@@ -56,7 +56,7 @@ Requirements: **JDK 17+** (the JDK IntelliJ installs in `%USERPROFILE%\.jdks` is
 2. Run **`start-windows.bat` from that same terminal**. It checks Java, Node.js, MySQL and the ports, then starts
    report-service, waits until it answers, starts alert-service, waits, starts the React client and opens
    http://localhost:5173. The first run downloads libraries and takes a few minutes.
-3. Use **Acting as** in the top bar to switch between citizens and ward officials.
+3. On the hosted site, use **Sign in** with a provisioned citizen or officer account.
 
 Manual start (set the database environment variables in each backend terminal, then run these in three terminals in this order;
 the Maven wrapper settings are already included):
@@ -73,9 +73,10 @@ build output and installed dependencies are excluded from Git.
 
 ## Demonstration boundaries
 
-The **Acting as** selector changes the demo user ID; it is not a login or authenticated session.
-`report-service` checks the supplied user's role when resolving a report. `alert-service` resolution endpoints
-do not enforce a server-side role check; hiding the button in the UI is only demo behaviour.
+The hosted gateway authenticates email/password accounts using scrypt password hashes and
+random, server-managed sessions in Secure HttpOnly SameSite cookies. It binds all writes to
+the signed-in user's database ID and requires the OFFICIAL role for report and alert closure.
+The Java services are private; access control is enforced by the public Node gateway.
 Closing an alert does not resolve its underlying report, so a later evaluation or startup backfill can reopen it.
 The services share one database, and the insight season boundaries are fixed to the supplied demo seasons.
 
@@ -94,8 +95,8 @@ frontend build passed, and two HTTP gateway integration tests passed. All four R
 reached `SUCCESS`. Anonymous checks of the public website verified its pages, assets, reference
 data and insights, plus real report creation, self/duplicate-vote rejection, threshold confirmation,
 service-to-service alert creation and report/alert resolution. The synthetic deployment check
-record was resolved afterwards. The public container build disables registration and uses the
-existing sample identities; local development retains registration.
+record was resolved afterwards. The public container build uses provisioned email/password accounts;
+public registration and the old identity selector are disabled.
 
 The initial Git history imports an existing classroom project in meaningful component groups.
 Commit timestamps record this publication; they do not represent historical sprint dates.
