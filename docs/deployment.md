@@ -1,5 +1,9 @@
 # Public website deployment
 
+Live demo: **https://floodwatch-chennai-vijay185.up.railway.app**.
+It is deployed in Railway's Singapore region with persistent MySQL storage. Only the web
+gateway has a public domain; both Java services and MySQL remain private.
+
 The complete live application uses React, both Spring Boot services and a shared MySQL database.
 GitHub Pages alone cannot run the Java services or the database. Deploy the four services below
 to a container host such as Railway. Only the web gateway receives a public HTTPS domain.
@@ -10,7 +14,7 @@ to a container host such as Railway. Only the web gateway receives a public HTTP
 | --- | --- | --- | --- | --- |
 | MySQL | Official MySQL 8.4 image with a persistent volume | 3306 | Database connection | Private |
 | report-service | `/report-service` | 8080 | `/api/stats` | Private |
-| alert-service | `/alert-service` | 8080 | `/api/alerts?active=true` | Private |
+| alert-service | `/alert-service` | 8080 | `/api/alerts` | Private |
 | web | `/frontend` | 8080 | `/health` | Public HTTPS |
 
 Each source directory contains its own Dockerfile, so select the matching root directory when
@@ -52,6 +56,9 @@ opened directly. `/health` returns success only when both backend services answe
 Railway requires an authorized connected account. Check the account's available credits and
 resource limits before deployment; a free trial is not a promise of permanent free hosting.
 The final public URL is assigned by the host after deployment and must be verified then.
+
+The deployed services follow the GitHub `main` branch. Watch paths limit each application to
+its own source folder, so documentation-only changes do not rebuild every service.
 
 ## Public classroom demo
 

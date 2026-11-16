@@ -2,6 +2,9 @@
 
 **A Community Verified Waterlogging Reporting and Alert System**
 
+**[Open the live website](https://floodwatch-chennai-vijay185.up.railway.app)** — public access, no sign-in required.
+React, both Spring Boot services and persistent MySQL run on Railway in Singapore.
+
 Crowd-sourced waterlogging reports for Chennai. Citizens report a waterlogged street with a severity level,
 neighbours vote to confirm it, a **Canvas ward map** colours each ward live, and an **alert-service**
 microservice raises a street alert once a report is confirmed by **N** people (default N = 3).
@@ -85,6 +88,14 @@ demonstration evidence, not captures from that test run.
 
 On 14 November 2026, the locked frontend dependencies were installed in a clean verification directory
 and `npm run build` passed with Vite 5.4.21 (54 modules transformed).
+
+On 16 November 2026, both backend containers passed their five-test JUnit suites, the production
+frontend build passed, and two HTTP gateway integration tests passed. All four Railway services
+reached `SUCCESS`. Anonymous checks of the public website verified its pages, assets, reference
+data and insights, plus real report creation, self/duplicate-vote rejection, threshold confirmation,
+service-to-service alert creation and report/alert resolution. The synthetic deployment check
+record was resolved afterwards. The public container build disables registration and uses the
+existing sample identities; local development retains registration.
 
 The initial Git history imports an existing classroom project in meaningful component groups.
 Commit timestamps record this publication; they do not represent historical sprint dates.
