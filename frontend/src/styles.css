@@ -232,6 +232,17 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .modal { background: #fff; border-radius: var(--radius); padding: 1.3rem; width: min(420px, 92vw); display: flex; flex-direction: column; gap: .8rem; color: var(--navy); }
 .modal label { display: flex; flex-direction: column; gap: .3rem; font-weight: 600; font-size: .9rem; }
 
+.public-demo-notice {
+  margin: 0 0 1rem;
+  padding: .75rem 1rem;
+  border: 1px solid #99ccdf;
+  border-radius: .6rem;
+  background: #eef8fc;
+  color: #17465b;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .map-layout { grid-template-columns: 1fr; }

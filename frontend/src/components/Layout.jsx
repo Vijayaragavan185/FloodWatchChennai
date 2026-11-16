@@ -12,6 +12,8 @@ const LINKS = [
   { to: '/about', label: 'How it works' },
 ]
 
+const PUBLIC_DEMO = import.meta.env.VITE_PUBLIC_DEMO === 'true'
+
 export default function Layout() {
   const { users, current, setCurrentId } = useUser()
   const [registering, setRegistering] = useState(false)
@@ -44,10 +46,11 @@ export default function Layout() {
               </option>
             ))}
           </select>
-          <button type="button" className="link-btn" onClick={() => setRegistering(true)}>+ New user</button>
+          {!PUBLIC_DEMO && <button type="button" className="link-btn" onClick={() => setRegistering(true)}>+ New user</button>}
         </div>
       </header>
       <main className="content">
+        {PUBLIC_DEMO && <p className="public-demo-notice" role="note">Public classroom demo · Use the sample identities. Reports are shared demo records; enter synthetic observations only.</p>}
         <Outlet />
       </main>
       <footer className="footer">
